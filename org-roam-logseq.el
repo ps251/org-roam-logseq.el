@@ -43,14 +43,14 @@
 
 ;; Your logseq directory should be inside your org-roam directory,
 ;; put the directory you use here
-(defvar bill/logseq-folder org-roam-directory)
+(defcustom bill/logseq-folder org-roam-directory "org-roam directory")
 
 ;; You probably don't need to change these values
-(defvar bill/logseq-pages (f-expand (f-join bill/logseq-folder "pages")))
-(defvar bill/logseq-journals (f-expand (f-join bill/logseq-folder "journals")))
+(defcustom bill/logseq-pages (f-expand (f-join bill/logseq-folder "pages")) "logseq pages directory")
+(defcustom bill/logseq-journals (f-expand (f-join bill/logseq-folder "journals")) "logseq journal directory")
 ;; ignore files matching bill/logseq-exclude-pattern
 ;; default: exclude all files in the logseq/bak/ folder
-(defvar bill/logseq-exclude-pattern (string-join (list "^" (file-truename bill/logseq-folder) "/logseq/bak/.*$")))
+(defcustom bill/logseq-exclude-pattern (string-join (list "^" (file-truename bill/logseq-folder) "/logseq/bak/.*$")) "patterns of files that aren't supposed to be part of logseq")
 
 (defun bill/logseq-journal-p (file) (string-match-p (concat "^" bill/logseq-journals) file))
 
