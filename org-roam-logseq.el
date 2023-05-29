@@ -52,6 +52,9 @@
 ;; default: exclude all files in the logseq/bak/ folder
 (defcustom bill/logseq-exclude-pattern (string-join (list "^" (file-truename bill/logseq-folder) "/logseq/bak/.*$")) "patterns of files that aren't supposed to be part of logseq")
 
+
+(defcustom org-roam-logseq/logseq-id-title-mod-path (f-expand (f-join bill/logseq-folder "pages")) "paths where id and title additions are allowed")
+
 (defcustom org-roam-logseq/ignore-file-links t "When t, file-links will not be converted, only fuzzy links")
 
 (defun bill/logseq-journal-p (file) (string-match-p (concat "^" bill/logseq-journals) file))
@@ -59,7 +62,7 @@
 (defun bill/ensure-file-id (file)
   "Visit an existing file, ensure it has an id, return whether the a new buffer was created"
   (setq file (f-expand file))
-  (if (bill/logseq-journal-p file)
+  (if (and (bill/logseq-journal-p file) (not (string-match-p (concat "^" org-roam-logseq/logseq-id-title-mod-path) file)))
       ;; do nothing for journal files
       ;; TODO double check this is actually desired behaviour
       `(nil . nil)
