@@ -52,6 +52,8 @@
 ;; default: exclude all files in the logseq/bak/ folder
 (defcustom bill/logseq-exclude-pattern (string-join (list "^" (file-truename bill/logseq-folder) "/logseq/bak/.*$")) "patterns of files that aren't supposed to be part of logseq")
 
+(defcustom org-roam-logseq/ignore-file-links t "When t, file-links will not be converted, only fuzzy links")
+
 (defun bill/logseq-journal-p (file) (string-match-p (concat "^" bill/logseq-journals) file))
 
 (defun bill/ensure-file-id (file)
@@ -146,7 +148,7 @@
                            (buffer-substring-no-properties contents-begin contents-end)
                            (org-element-property :raw-link link)
                          )))
-      (when (equal "file" (org-element-property :type link))
+      (when (and org-roam-logseq/ignore-file-links (equal "file" (org-element-property :type link)))
         ;; TODO create a workaround for Logseq's bug with aliases
         (setq filename (f-expand (replace-regexp-in-string "\\..//" "/" (org-element-property :path link))))
         (if (org-element-property :contents-begin link)
