@@ -51,16 +51,17 @@
 ;; ignore files matching bill/logseq-exclude-pattern
 ;; default: exclude all files in the logseq/bak/ folder
 (defcustom bill/logseq-exclude-pattern (string-join (list "^" (file-truename bill/logseq-folder) "/logseq/bak/.*$")) "patterns of files that aren't supposed to be part of logseq")
+(defcustom org-roam-logseq/ignore-journal-files t "When non-nil, journal files will be ignored")
 
-(defcustom org-roam-logseq/ignore-file-links t "When t, file-links will not be converted, only fuzzy links")
+(defcustom org-roam-logseq/ignore-file-links t "When non-nil, file-links will not be converted, only fuzzy links")
 
 (defun bill/logseq-journal-p (file) (string-match-p (concat "^" bill/logseq-journals) file))
 
 (defun bill/ensure-file-id (file)
   "Visit an existing file, ensure it has an id, return whether the a new buffer was created"
   (setq file (f-expand file))
-  (if (bill/logseq-journal-p file)
-      ;; do nothing for journal files
+  (if (and org-roam-logseq/ignore-journal-files (bill/logseq-journal-p file) )
+      ;; do nothing for journal files if org-roam-logseq/ignore-journal-files is non-nil
       ;; TODO double check this is actually desired behaviour
       `(nil . nil)
     (let* ((buf (get-file-buffer file))
@@ -210,7 +211,7 @@
       (setq cur (bill/ensure-file-id file-path))
       (setq buf (cdr cur))
       (push buf bufs)
-      (when (and (not (bill/logseq-journal-p file-path))
+      (when (and (or (not org-roam-logseq/ignore-journal-files) (not (bill/logseq-journal-p file-path)) )
                  (not buf))
         (push file-path bad))
       (when (not (buffer-modified-p buf))
