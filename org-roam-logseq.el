@@ -41,29 +41,25 @@
 (require 'cl-lib)
 (require 'org-roam)
 
-;; Your logseq directory should be inside your org-roam directory,
-;; put the directory you use here
-(defcustom bill/logseq-folder org-roam-directory "org-roam directory")
-
 ;; You probably don't need to change these values
-(defcustom bill/logseq-pages (f-expand (f-join bill/logseq-folder "pages")) "logseq pages directory")
-(defcustom bill/logseq-journals (f-expand (f-join bill/logseq-folder "journals")) "logseq journal directory")
+(defcustom org-roam-logseq-logseq-journals (f-expand (f-join org-roam-directory "journals")) "logseq journal directory")
 ;; ignore files matching bill/logseq-exclude-pattern
 ;; default: exclude all files in the logseq/bak/ folder
-(defcustom bill/logseq-exclude-pattern (string-join (list "^" (file-truename bill/logseq-folder) "/logseq/bak/.*$")) "patterns of files that aren't supposed to be part of logseq")
+(defcustom org-roam-logseq-logseq-exclude-pattern (string-join (list "^" (file-truename org-roam-directory) "/logseq/bak/.*$")) "patterns of files that aren't supposed to be part of logseq")
+(defcustom org-roam-logseq/ignore-journal-files t "When non-nil, journal files will be ignored")
 
 
 (defcustom org-roam-logseq/logseq-id-title-mod-path (f-expand (f-join bill/logseq-folder "pages")) "paths where id and title additions are allowed")
 
-(defcustom org-roam-logseq/ignore-file-links t "When t, file-links will not be converted, only fuzzy links")
+(defcustom org-roam-logseq/ignore-file-links t "When non-nil, file-links will not be converted, only fuzzy links")
 
-(defun bill/logseq-journal-p (file) (string-match-p (concat "^" bill/logseq-journals) file))
+(defun org-roam-logseq-logseq-journal-p (file) (string-match-p (concat "^" org-roam-logseq-logseq-journals) file))
 
-(defun bill/ensure-file-id (file)
+(defun org-roam-logseq-ensure-file-id (file)
   "Visit an existing file, ensure it has an id, return whether the a new buffer was created"
   (setq file (f-expand file))
-  (if (and (bill/logseq-journal-p file) (not (string-match-p (concat "^" org-roam-logseq/logseq-id-title-mod-path) file)))
-      ;; do nothing for journal files
+  (if (and (and org-roam-logseq/ignore-journal-files (org-roam-logseq-logseq-journal-p file) ) (not (string-match-p (concat "^" org-roam-logseq/logseq-id-title-mod-path) file)))
+      ;; do nothing for journal files if org-roam-logseq/ignore-journal-files is non-nil
       ;; TODO double check this is actually desired behaviour
       `(nil . nil)
     (let* ((buf (get-file-buffer file))
@@ -107,7 +103,7 @@
       (when changed (save-buffer))
       (cons new-buf buf))))
 
-(defun bill/convert-logseq-file (buf)
+(defun org-roam-logseq-convert-logseq-file (buf)
   "convert fuzzy and file:../pages logseq links in the file to id links"
   (save-excursion
     (let* (changed
@@ -116,7 +112,7 @@
       (goto-char 1)
       (while (search-forward "[[" nil t)
         (setq link (org-element-context))
-        (setq newlink (bill/reformat-link link))
+        (setq newlink (org-roam-logseq-reformat-link link))
         (when newlink
           (setq changed t)
           (goto-char (org-element-property :begin link))
@@ -127,7 +123,7 @@
       ;; ensure org-roam knows about the changed links
       (when changed (save-buffer)))))
 
-(defun bill/reformat-link (link)
+(defun org-roam-logseq-reformat-link (link)
   (let (filename
         title
         id
@@ -177,31 +173,31 @@
                              (org-element-property :end link))))
             newlink))))))
 
-(defun bill/roam-file-modified-p (file-path)
-  (and (not (string-match-p bill/logseq-exclude-pattern (file-truename file-path)))
+(defun org-roam-logseq-roam-file-modified-p (file-path)
+  (and (not (string-match-p org-roam-logseq-logseq-exclude-pattern (file-truename file-path)))
        (let ((content-hash (org-roam-db--file-hash file-path))
              (db-hash (caar (org-roam-db-query [:select hash :from files
                                                         :where (= file $s1)] file-path))))
          (not (string= content-hash db-hash)))))
 
-(defun bill/modified-logseq-files ()
+(defun org-roam-logseq-modified-logseq-files ()
   (emacsql-with-transaction (org-roam-db)
-    (seq-filter 'bill/roam-file-modified-p
-                (org-roam--list-files bill/logseq-folder))))
+    (seq-filter 'org-roam-logseq-roam-file-modified-p
+                (org-roam--list-files org-roam-directory))))
 
-(defun bill/check-logseq ()
+(defun org-roam-logseq-check-logseq ()
   (interactive)
-  (setq files (org-roam--list-files bill/logseq-folder))
-  (message "bill/check-logseq is processing %d" (length files))
+  (setq files (org-roam--list-files org-roam-directory))
+  (message "org-roam-logseq-check-logseq is processing %d" (length files))
   (org-roam-logseq-patch files)
   )
 
-(defun bill/check-logseq-unsynced ()
+(defun org-roam-logseq-check-logseq-unsynced ()
   (interactive)
-  (setq files (org-roam--list-files bill/logseq-folder))
+  (setq files (org-roam--list-files org-roam-directory))
   (setq files-in-db (apply #'append (org-roam-db-query [:select file :from files])))
   (setq unsynced-files (cl-set-difference files files-in-db :test #'file-equal-p))
-  (message "bill/check-logseq-unsynced is processing %d" (length unsynced-files))
+  (message "org-roam-logseq-check-logseq-unsynced is processing %d" (length unsynced-files))
   (org-roam-logseq-patch unsynced-files)
   )
 
@@ -210,10 +206,10 @@
     ;; make sure all the files have file ids
     (dolist (file-path files)
       (setq file-path (f-expand file-path))
-      (setq cur (bill/ensure-file-id file-path))
+      (setq cur (org-roam-logseq-ensure-file-id file-path))
       (setq buf (cdr cur))
       (push buf bufs)
-      (when (and (not (bill/logseq-journal-p file-path))
+      (when (and (or (not org-roam-logseq/ignore-journal-files) (not (org-roam-logseq-logseq-journal-p file-path)) )
                  (not buf))
         (push file-path bad))
       (when (not (buffer-modified-p buf))
@@ -221,7 +217,7 @@
       (when (car cur)
         (push buf created)))
     ;; patch fuzzy links
-    (mapc 'bill/convert-logseq-file
+    (mapc 'org-roam-logseq-convert-logseq-file
           (seq-filter 'identity bufs))
     (dolist (buf unmodified)
       (when (buffer-modified-p buf)
@@ -235,8 +231,8 @@
   "Process any org-roam files on accessing if they have logseq links."
   (when (org-roam-file-p)
     (progn
-      (bill/ensure-file-id (buffer-file-name (current-buffer)))
-      (bill/convert-logseq-file (current-buffer)))))
+      (org-roam-logseq-ensure-file-id (buffer-file-name (current-buffer)))
+      (org-roam-logseq-convert-logseq-file (current-buffer)))))
 
 (add-hook 'find-file-hook #'org-roam-logseq-hook)
 
