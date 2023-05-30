@@ -58,9 +58,11 @@
 (defun org-roam-logseq-ensure-file-id (file)
   "Visit an existing file, ensure it has an id, return whether the a new buffer was created"
   (setq file (f-expand file))
-  (if (or (and org-roam-logseq/ignore-journal-files (org-roam-logseq-logseq-journal-p file) ) (not (string-match-p (concat "^" org-roam-logseq/logseq-id-title-mod-path) file)))
-      ;; do nothing for journal files if org-roam-logseq/ignore-journal-files is non-nil
-      ;; TODO double check this is actually desired behaviour
+  ;; do nothing at all when file is excluded by exclude pattern
+  (if (string-match-p org-roam-logseq-logseq-exclude-pattern (file-truename file))
+      (cons nil nil)
+   (if (or (and org-roam-logseq/ignore-journal-files (org-roam-logseq-logseq-journal-p file) ) (not (string-match-p (concat "^" org-roam-logseq/logseq-id-title-mod-path) file)))
+      ;; do not add id and title for journal files if org-roam-logseq/ignore-journal-files is non-nil. Also if file doesn't match org-roam-logseq/logseq-id-title-mod-path
       (if-let ( (buf (get-file-buffer file)) )
           (cons nil buf)
         (cons t (find-file-noselect file))
@@ -104,11 +106,14 @@
           ))
       ;; ensure org-roam knows about the new id and/or title
       (when changed (save-buffer))
-      (cons new-buf buf))))
+      (cons new-buf buf))) ))
 
 (defun org-roam-logseq-convert-logseq-file (buf)
   "convert fuzzy and file:../pages logseq links in the file to id links"
-  (save-excursion
+  (if (string-match-p org-roam-logseq-logseq-exclude-pattern (file-truename (buffer-file-name buf)))
+      ;; do nothing at all if file is in exclude pattern
+      nil
+   (save-excursion
     (let* (changed
            link)
       (set-buffer buf)
@@ -124,7 +129,7 @@
           (insert newlink)
           (message "Convering logseq file %s link from %s to %s" (buffer-file-name buf) (org-element-property :raw-link link) newlink)))
       ;; ensure org-roam knows about the changed links
-      (when changed (save-buffer)))))
+      (when changed (save-buffer)))) ))
 
 (defun org-roam-logseq-reformat-link (link)
   (let (filename
