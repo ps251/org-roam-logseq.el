@@ -49,7 +49,7 @@
 (defcustom org-roam-logseq/ignore-journal-files t "When non-nil, journal files will be ignored")
 
 
-(defcustom org-roam-logseq/logseq-id-title-mod-path (f-expand (f-join org-roam-directory "pages")) "paths where id and title additions are allowed")
+(defcustom org-roam-logseq/logseq-id-title-mod-path (f-expand (f-join org-roam-directory "pages/")) "paths where id and title additions are allowed")
 
 (defcustom org-roam-logseq/ignore-file-links t "When non-nil, file-links will not be converted, only fuzzy links")
 
@@ -58,10 +58,13 @@
 (defun org-roam-logseq-ensure-file-id (file)
   "Visit an existing file, ensure it has an id, return whether the a new buffer was created"
   (setq file (f-expand file))
-  (if (and (and org-roam-logseq/ignore-journal-files (org-roam-logseq-logseq-journal-p file) ) (not (string-match-p (concat "^" org-roam-logseq/logseq-id-title-mod-path) file)))
+  (if (or (and org-roam-logseq/ignore-journal-files (org-roam-logseq-logseq-journal-p file) ) (not (string-match-p (concat "^" org-roam-logseq/logseq-id-title-mod-path) file)))
       ;; do nothing for journal files if org-roam-logseq/ignore-journal-files is non-nil
       ;; TODO double check this is actually desired behaviour
-      `(nil . nil)
+      (if-let ( (buf (get-file-buffer file)) )
+          (cons nil buf)
+        (cons t (find-file-noselect file))
+        )
     (let* ((buf (get-file-buffer file))
            (was-modified (buffer-modified-p buf))
            (new-buf nil)
@@ -147,7 +150,7 @@
                            (buffer-substring-no-properties contents-begin contents-end)
                            (org-element-property :raw-link link)
                          )))
-      (when (and org-roam-logseq/ignore-file-links (equal "file" (org-element-property :type link)))
+      (when (and (not org-roam-logseq/ignore-file-links) (equal "file" (org-element-property :type link)))
         ;; TODO create a workaround for Logseq's bug with aliases
         (setq filename (f-expand (replace-regexp-in-string "\\..//" "/" (org-element-property :path link))))
         (if (org-element-property :contents-begin link)
