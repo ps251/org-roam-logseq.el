@@ -80,7 +80,7 @@
   ;; do nothing at all when file is excluded by exclude pattern
   (if (string-match-p org-roam-logseq/logseq-exclude-pattern (file-truename file))
       (cons nil nil)
-    (if (or (and org-roam-logseq/ignore-journal-files (org-roam-logseq/logseq-journal-p file) ) (not (string-match-p (concat "^" org-roam-logseq/logseq-id-title-mod-path) file)))
+    (if (and (and org-roam-logseq/ignore-journal-files (org-roam-logseq/logseq-journal-p file) ) (not (string-match-p (concat "^" org-roam-logseq/logseq-id-title-mod-path) file)))
         ;; do not add id and title for journal files if org-roam-logseq/ignore-journal-files is non-nil. Also if file doesn't match org-roam-logseq/logseq-id-title-mod-path
         (if-let ( (buf (get-file-buffer file)) )
             (cons nil buf)
