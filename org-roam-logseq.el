@@ -7,7 +7,7 @@
 ;; URL: https://github.com/idanov/org-roam-logseq.el/
 ;; Keywords: org-mode, roam, logseq
 ;; Version: 0.1.0
-;; Package-Requires: ((org-roam "2.2.2") (cl-lib))
+;; Package-Requires: ((emacs "29") (org-roam "2.2.2") (cl-lib "1.0"))
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -42,29 +42,40 @@
 (require 'cl-lib)
 (require 'org-roam)
 
+(defgroup org-roam-logseq nil
+  "Org-roam Logseq converter"
+  :group 'org-roam
+  :prefix "org-roam-logseq-"
+  :link '(url-link :tag "Github" "https://github.com/FrederickGeek8/org-roam-logseq.el"))
+
 ;; Your logseq directory should be inside your org-roam directory,
 ;; put the directory you use here
 ;; e.g. (defvar org-roam-logseq-folder (f-expand (f-join org-roam-directory "zettel")))
-(defcustom org-roam-logseq/logseq-folder (f-expand org-roam-directory) "root of the logseq directory")
+(defcustom org-roam-logseq/logseq-folder (f-expand org-roam-directory) "Root of the logseq directory." :type 'directory :group 'org-roam-logseq)
 
 ;; You probably don't need to change these values
-(defcustom org-roam-logseq/logseq-journals (f-expand (f-join org-roam-logseq/logseq-folder "journals")) "logseq journal directory")
-(defcustom org-roam-logseq/logseq-pages (f-expand (f-join org-roam-logseq/logseq-folder "pages")) "logseq pages directory")
+(defcustom org-roam-logseq/logseq-journals (f-expand (f-join org-roam-logseq/logseq-folder "journals")) "Logseq journal directory." :type 'directory :group 'org-roam-logseq)
+(defcustom org-roam-logseq/logseq-pages (f-expand (f-join org-roam-logseq/logseq-folder "pages")) "Logseq pages directory." :type 'directory :group 'org-roam-logseq)
 
 
 ;; default: exclude all files in the logseq/bak/ folder
-(defcustom org-roam-logseq/logseq-exclude-pattern (string-join (list "^" (file-truename org-roam-logseq/logseq-folder) "/logseq/bak/.*$")) "patterns of files that aren't supposed to be part of logseq")
-(defcustom org-roam-logseq/ignore-journal-files t "When non-nil, journal files will be ignored")
+(defcustom org-roam-logseq/logseq-exclude-pattern
+  (string-join (list "^" (file-truename org-roam-logseq/logseq-folder) "/logseq/bak/.*$"))
+  "Patterns of files that aren't supposed to be part of logseq."
+  :type 'regex
+  :group 'org-roam-logseq)
+
+(defcustom org-roam-logseq/ignore-journal-files t "When non-nil, journal files will be ignored." :type 'boolean :group 'org-roam-logseq)
 
 
-(defcustom org-roam-logseq/logseq-id-title-mod-path org-roam-logseq/logseq-pages "paths where id and title additions are allowed")
+(defcustom org-roam-logseq/logseq-id-title-mod-path org-roam-logseq/logseq-pages "Paths where id and title additions are allowed." :type 'directory :group 'org-roam-logseq)
 
-(defcustom org-roam-logseq/ignore-file-links t "When non-nil, file-links will not be converted, only fuzzy links")
+(defcustom org-roam-logseq/ignore-file-links t "When non-nil, file-links will not be converted, only fuzzy links." :type 'boolean :group 'org-roam-logseq)
 
 (defun org-roam-logseq/logseq-journal-p (file) (string-match-p (concat "^" org-roam-logseq/logseq-journals) file))
 
 (defun org-roam-logseq-ensure-file-id (file)
-  "Visit an existing file, ensure it has an id, return whether the a new buffer was created"
+  "Visit an existing file, ensure it has an id, return whether the a new buffer was created."
   (setq file (f-expand file))
   ;; do nothing at all when file is excluded by exclude pattern
   (if (string-match-p org-roam-logseq/logseq-exclude-pattern (file-truename file))
