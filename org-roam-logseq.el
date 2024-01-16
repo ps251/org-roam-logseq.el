@@ -3,6 +3,7 @@
 ;; Copyright (C) 2023, Ivan Danov
 
 ;; Author: Ivan Danov
+;; Modified By: Frederick Morlock, ps251 (GitHub)
 ;; URL: https://github.com/idanov/org-roam-logseq.el/
 ;; Keywords: org-mode, roam, logseq
 ;; Version: 0.1.0
