@@ -48,13 +48,15 @@
 
 ;; You probably don't need to change these values
 (defcustom org-roam-logseq-logseq-journals (f-expand (f-join org-roam-logseq-logseq-folder "journals")) "logseq journal directory")
+(defcustom org-roam-logseq-logseq-pages (f-expand (f-join org-roam-logseq-logseq-folder "pages")) "logseq pages directory")
+
 
 ;; default: exclude all files in the logseq/bak/ folder
 (defcustom org-roam-logseq-logseq-exclude-pattern (string-join (list "^" (file-truename org-roam-logseq-logseq-folder) "/logseq/bak/.*$")) "patterns of files that aren't supposed to be part of logseq")
 (defcustom org-roam-logseq/ignore-journal-files t "When non-nil, journal files will be ignored")
 
 
-(defcustom org-roam-logseq/logseq-id-title-mod-path (f-expand (f-join org-roam-logseq-logseq-folder "pages/")) "paths where id and title additions are allowed")
+(defcustom org-roam-logseq/logseq-id-title-mod-path org-roam-logseq-logseq-pages "paths where id and title additions are allowed")
 
 (defcustom org-roam-logseq/ignore-file-links t "When non-nil, file-links will not be converted, only fuzzy links")
 
